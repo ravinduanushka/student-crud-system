@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Student Management CRUD</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 40px auto;
+            max-width: 750px;
+            background-color: #f4f6f9;
+            color: #333;
+        }
+        h2 {
+            text-align: center;
+        }
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+            margin-bottom: 25px;
+        }
+        .form-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+        input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+        input:disabled {
+            background-color: #e9ecef;
+            cursor: not-allowed;
+        }
+        button {
+            padding: 10px 18px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            color: white;
+        }
+        .btn-primary {
+            background-color: #007bff;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+        .btn-edit {
+            background-color: #28a745;
+            padding: 6px 12px;
+            margin-right: 5px;
+        }
+        .btn-edit:hover {
+            background-color: #218838;
+        }
+        .btn-delete {
+            background-color: #dc3545;
+            padding: 6px 12px;
+        }
+        .btn-delete:hover {
+            background-color: #bd2130;
+        }
+        .btn-cancel {
+            background-color: #6c757d;
+        }
+        .btn-cancel:hover {
+            background-color: #5a6268;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+        th, td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #eee;
+            text-align: left;
+        }
+        th {
+            background-color: #007bff;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+<h2>Student Management System</h2>
+
+<div class="card">
+    <h3 id="formTitle">Add New Student</h3>
+    <div class="form-group">
+        <input type="number" id="studentId" placeholder="Student ID (e.g. 1)" required>
+        <input type="text" id="studentName" placeholder="Full Name" required>
+        <input type="text" id="studentCourse" placeholder="Course" required>
+        <button id="saveBtn" class="btn-primary" onclick="handleSaveOrUpdate()">Save</button>
+        <button id="cancelBtn" class="btn-cancel" onclick="resetForm()" style="display: none;">Cancel</button>
+    </div>
+</div>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Name</th>
+        <th>Course</th>
+        <th>Action</th>
+    </tr>
+    </thead>
+    <tbody id="studentTableBody">
+    </tbody>
+</table>
+
+<script>
+    const API_URL = '/api/students';
+    let isEditMode = false;
+
+    // Fetch students on page load
+    document.addEventListener('DOMContentLoaded', loadStudents);
+
+    // Read: Load all students
+    function loadStudents() {
+        fetch(API_URL)
+            .then(response => response.json())
+            .then(data => {
+                const tbody = document.getElementById('studentTableBody');
+                tbody.innerHTML = '';
+                data.forEach(student => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                            <td>${student.id}</td>
+                            <td>${student.name}</td>
+                            <td>${student.course}</td>
+                            <td>
+                                <button class="btn-edit" onclick="populateEditForm(${student.id}, '${student.name}', '${student.course}')">Edit</button>
+                                <button class="btn-delete" onclick="deleteStudent(${student.id})">Delete</button>
+                            </td>
+                        `;
+                    tbody.appendChild(tr);
+                });
+            })
+            .catch(err => console.error('Error fetching students:', err));
+    }
+
+    // Populate fields into form for editing
+    function populateEditForm(id, name, course) {
+        isEditMode = true;
+        document.getElementById('studentId').value = id;
+        document.getElementById('studentId').disabled = true; // ID cannot be edited
+        document.getElementById('studentName').value = name;
+        document.getElementById('studentCourse').value = course;
+
+        document.getElementById('formTitle').innerText = 'Update Student';
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerText = 'Update';
+        saveBtn.className = 'btn-edit';
+        document.getElementById('cancelBtn').style.display = 'inline-block';
+    }
+
+    // Handle Save (POST) or Update (PUT)
+    function handleSaveOrUpdate() {
+        const id = document.getElementById('studentId').value;
+        const name = document.getElementById('studentName').value;
+        const course = document.getElementById('studentCourse').value;
+
+        if (!id || !name || !course) {
+            alert('Please fill all fields');
+            return;
+        }
+
+        const payload = {
+            id: parseInt(id),
+            name: name,
+            course: course
+        };
+
+        if (isEditMode) {
+            // Update (PUT)
+            fetch(`${API_URL}/${id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(() => {
+                    resetForm();
+                    loadStudents();
+                })
+                .catch(err => console.error('Error updating student:', err));
+        } else {
+            // Create (POST)
+            fetch(API_URL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(payload)
+            })
+                .then(response => response.json())
+                .then(() => {
+                    resetForm();
+                    loadStudents();
+                })
+                .catch(err => console.error('Error adding student:', err));
+        }
+    }
+
+    // Reset form back to Add mode
+    function resetForm() {
+        isEditMode = false;
+        document.getElementById('studentId').value = '';
+        document.getElementById('studentId').disabled = false;
+        document.getElementById('studentName').value = '';
+        document.getElementById('studentCourse').value = '';
+
+        document.getElementById('formTitle').innerText = 'Add New Student';
+        const saveBtn = document.getElementById('saveBtn');
+        saveBtn.innerText = 'Save';
+        saveBtn.className = 'btn-primary';
+        document.getElementById('cancelBtn').style.display = 'none';
+    }
+
+    // Delete (DELETE)
+    function deleteStudent(id) {
+        fetch(`${API_URL}/${id}`, {
+            method: 'DELETE'
+        })
+            .then(() => {
+                loadStudents();
+            })
+            .catch(err => console.error('Error deleting student:', err));
+    }
+</script>
+</body>
+</html>

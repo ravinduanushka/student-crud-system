@@ -1,5 +1,6 @@
 package com.example.studentcrud;
 
+import com.example.studentcrud.entity.Student;
 import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.List;

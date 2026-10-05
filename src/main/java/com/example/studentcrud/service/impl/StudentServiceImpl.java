@@ -23,7 +23,7 @@ public class StudentServiceImpl implements StudentService {
     public StudentResponseDTO createStudent(StudentRequestDTO requestDTO) {
         Student student = new Student();
         student.setName(requestDTO.getName());
-        student.setEmail(requestDTO.getEmail());
+        student.setCourse(requestDTO.getCourse());
 
         Student savedStudent = studentRepository.save(student);
         return mapToResponseDTO(savedStudent);
@@ -50,7 +50,7 @@ public class StudentServiceImpl implements StudentService {
                 .orElseThrow(() -> new RuntimeException("Student not found with id: " + id));
 
         student.setName(requestDTO.getName());
-        student.setEmail(requestDTO.getEmail());
+        student.setCourse(requestDTO.getCourse());
 
         Student updatedStudent = studentRepository.save(student);
         return mapToResponseDTO(updatedStudent);
@@ -67,7 +67,7 @@ public class StudentServiceImpl implements StudentService {
         StudentResponseDTO dto = new StudentResponseDTO();
         dto.setId(student.getId());
         dto.setName(student.getName());
-        dto.setEmail(student.getEmail());
+        dto.setCourse(student.getCourse());
         return dto;
     }
 }
